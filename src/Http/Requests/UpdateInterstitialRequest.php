@@ -59,12 +59,25 @@ class UpdateInterstitialRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
+        // Decode JSON strings to arrays for trigger_routes and audience_roles
+        $triggerRoutes = $this->input('trigger_routes');
+        if (is_string($triggerRoutes)) {
+            $triggerRoutes = json_decode($triggerRoutes, true) ?: [];
+        }
+
+        $audienceRoles = $this->input('audience_roles');
+        if (is_string($audienceRoles)) {
+            $audienceRoles = json_decode($audienceRoles, true) ?: [];
+        }
+
         $this->merge([
             'allow_dismiss' => $this->boolean('allow_dismiss', true),
             'allow_dont_show_again' => $this->boolean('allow_dont_show_again', false),
             'is_active' => $this->boolean('is_active', true),
             'priority' => $this->input('priority', 0),
             'queue_behavior' => $this->input('queue_behavior', 'inherit'),
+            'trigger_routes' => $triggerRoutes,
+            'audience_roles' => $audienceRoles,
         ]);
     }
 }

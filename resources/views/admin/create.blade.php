@@ -14,11 +14,11 @@
 
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ route('larastitial.admin.store') }}">
+            <form method="POST" action="{{ route('larastitial.admin.store') }}" class="larastitial-admin-form">
                 @csrf
                 @include('larastitial::admin.partials.form')
 
-                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <div class="larastitial-form-actions">
                     <button type="submit" class="btn btn-primary">Create Interstitial</button>
                     <a href="{{ route('larastitial.admin.index') }}" class="btn btn-secondary">Cancel</a>
                 </div>
