@@ -10,10 +10,11 @@
         "onboarding"
     ],
     "license": "MIT",
+    "version": "1.0.5",
     "authors": [
         {
             "name": "effina",
-            "email": "hello@effina.io"
+            "email": "tech@effina.com"
         }
     ],
     "require": {
