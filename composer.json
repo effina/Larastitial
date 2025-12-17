@@ -1,6 +1,7 @@
 {
     "name": "effina/larastitial",
     "description": "A Laravel package for managing interstitials (modals, full-page redirects, inline content blocks) with configurable triggers, audience targeting, and frequency control.",
+    "version": "1.0.6",
     "keywords": [
         "laravel",
         "interstitials",
