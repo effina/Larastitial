@@ -195,13 +195,24 @@ class InterstitialManager
         $eventClass = get_class($event);
         $user = $this->extractUserFromEvent($event);
 
-        // Debug: Check what's in the database
+        // Debug: Check what's in the database using raw DB query
+        $tableName = (new Interstitial())->getTable();
+        $rawResults = \Illuminate\Support\Facades\DB::table($tableName)
+            ->whereNull('deleted_at')
+            ->get(['id', 'name', 'trigger_event', 'is_active']);
+
+        Log::debug('[Larastitial] Raw DB query - all interstitials', [
+            'table' => $tableName,
+            'results' => $rawResults->toArray(),
+        ]);
+
         $allWithEvent = Interstitial::query()
             ->where('trigger_event', $eventClass)
             ->get();
 
         Log::debug('[Larastitial] Checking event interstitials', [
             'event_class' => $eventClass,
+            'event_class_length' => strlen($eventClass),
             'all_with_event' => $allWithEvent->map(fn ($i) => [
                 'id' => $i->id,
                 'name' => $i->name,
