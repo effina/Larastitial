@@ -195,14 +195,52 @@ class InterstitialManager
         $eventClass = get_class($event);
         $user = $this->extractUserFromEvent($event);
 
-        return Interstitial::query()
+        // Debug: Check what's in the database
+        $allWithEvent = Interstitial::query()
+            ->where('trigger_event', $eventClass)
+            ->get();
+
+        Log::debug('[Larastitial] Checking event interstitials', [
+            'event_class' => $eventClass,
+            'all_with_event' => $allWithEvent->map(fn ($i) => [
+                'id' => $i->id,
+                'name' => $i->name,
+                'trigger_event' => $i->trigger_event,
+                'is_active' => $i->is_active,
+                'schedule_start' => $i->trigger_schedule_start,
+                'schedule_end' => $i->trigger_schedule_end,
+            ])->toArray(),
+        ]);
+
+        $afterActive = Interstitial::query()
+            ->active()
+            ->forEvent($eventClass)
+            ->get();
+
+        Log::debug('[Larastitial] After active filter', [
+            'count' => $afterActive->count(),
+        ]);
+
+        $afterSchedule = Interstitial::query()
             ->active()
             ->scheduledNow()
             ->forEvent($eventClass)
-            ->byPriority()
-            ->get()
+            ->get();
+
+        Log::debug('[Larastitial] After schedule filter', [
+            'count' => $afterSchedule->count(),
+        ]);
+
+        $final = $afterSchedule
             ->filter(fn (Interstitial $i) => $this->shouldShow($i, $user))
             ->values();
+
+        Log::debug('[Larastitial] After shouldShow filter', [
+            'count' => $final->count(),
+            'user_id' => $user?->getAuthIdentifier(),
+        ]);
+
+        return $final;
     }
 
     /**
