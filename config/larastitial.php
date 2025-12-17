@@ -161,8 +161,8 @@ return [
     |
     */
     'event_listeners' => [
-        // \Illuminate\Auth\Events\Login::class,
-        // \Illuminate\Auth\Events\Registered::class,
+        \Illuminate\Auth\Events\Login::class,
+        \Illuminate\Auth\Events\Registered::class,
     ],
 
     /*
