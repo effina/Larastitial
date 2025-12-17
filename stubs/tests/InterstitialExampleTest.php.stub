@@ -1,0 +1,119 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+use effina\Larastitial\Facades\Larastitial;
+use effina\Larastitial\Models\Interstitial;
+use effina\Larastitial\Testing\InterstitialFactory;
+
+class InterstitialExampleTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /** @test */
+    public function it_shows_interstitial_to_authenticated_users(): void
+    {
+        $user = User::factory()->create();
+        $interstitial = Interstitial::factory()
+            ->forAuthenticated()
+            ->triggeredByRoutes(['dashboard'])
+            ->create();
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk();
+
+        // The interstitial should be queued
+        $this->assertTrue(Larastitial::hasQueued());
+    }
+
+    /** @test */
+    public function it_does_not_show_interstitial_to_guests(): void
+    {
+        $interstitial = Interstitial::factory()
+            ->forAuthenticated()
+            ->triggeredByRoutes(['home'])
+            ->create();
+
+        $this->get('/home')
+            ->assertOk();
+
+        // No interstitial should be queued for guests
+        $this->assertFalse(Larastitial::hasQueued());
+    }
+
+    /** @test */
+    public function it_shows_interstitial_once(): void
+    {
+        $user = User::factory()->create();
+        $interstitial = Interstitial::factory()
+            ->showOnce()
+            ->triggeredByRoutes(['dashboard'])
+            ->create();
+
+        // First visit
+        $this->actingAs($user)->get('/dashboard');
+        $this->assertTrue(Larastitial::shouldShow($interstitial, $user));
+
+        // Mark as viewed
+        Larastitial::markViewed($interstitial, $user, 'viewed');
+
+        // Second visit - should not show
+        $this->assertFalse(Larastitial::shouldShow($interstitial, $user));
+    }
+
+    /** @test */
+    public function it_can_use_fake_for_testing(): void
+    {
+        $fake = Larastitial::fake();
+
+        $interstitial = Interstitial::factory()->create();
+        $fake->shouldTrigger($interstitial);
+
+        // Simulate triggering
+        $fake->queue($interstitial, 'test');
+
+        $fake->assertTriggered($interstitial->name);
+    }
+
+    /** @test */
+    public function it_records_form_responses(): void
+    {
+        $user = User::factory()->create();
+        $interstitial = Interstitial::factory()
+            ->asForm()
+            ->create();
+
+        $response = Larastitial::recordResponse($interstitial, $user, [
+            'feedback' => 'Great app!',
+            'rating' => 5,
+        ]);
+
+        $this->assertNotNull($response);
+        $this->assertEquals('Great app!', $response->getValue('feedback'));
+        $this->assertEquals(5, $response->getValue('rating'));
+    }
+
+    /** @test */
+    public function it_respects_schedule(): void
+    {
+        $futureInterstitial = Interstitial::factory()
+            ->scheduled(now()->addDays(1), now()->addDays(30))
+            ->create();
+
+        $activeInterstitial = Interstitial::factory()
+            ->scheduled(now()->subDays(1), now()->addDays(30))
+            ->create();
+
+        // Future interstitial should not show
+        $this->assertFalse($futureInterstitial->isWithinSchedule());
+
+        // Active interstitial should show
+        $this->assertTrue($activeInterstitial->isWithinSchedule());
+    }
+}

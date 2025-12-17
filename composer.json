@@ -1,0 +1,57 @@
+{
+    "name": "effina/larastitial",
+    "description": "A Laravel package for managing interstitials (modals, full-page redirects, inline content blocks) with configurable triggers, audience targeting, and frequency control.",
+    "keywords": [
+        "laravel",
+        "interstitials",
+        "modals",
+        "popups",
+        "announcements",
+        "onboarding"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "effina",
+            "email": "hello@effina.io"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/contracts": "^10.0|^11.0|^12.0",
+        "illuminate/database": "^10.0|^11.0|^12.0",
+        "illuminate/support": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^10.0|^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "effina\\Larastitial\\": "src/"
+        },
+        "files": [
+            "src/Support/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "effina\\Larastitial\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "effina\\Larastitial\\LarastitialServiceProvider"
+            ],
+            "aliases": {
+                "Larastitial": "effina\\Larastitial\\Facades\\Larastitial"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

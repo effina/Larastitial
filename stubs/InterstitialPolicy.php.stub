@@ -1,0 +1,60 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use App\Models\User;
+use effina\Larastitial\Models\Interstitial;
+
+class InterstitialPolicy
+{
+    /**
+     * Determine whether the user can view any interstitials.
+     */
+    public function viewAny(User $user): bool
+    {
+        // Customize this logic for your application
+        return $user->hasRole('admin');
+    }
+
+    /**
+     * Determine whether the user can view the interstitial.
+     */
+    public function view(User $user, Interstitial $interstitial): bool
+    {
+        return $this->viewAny($user);
+    }
+
+    /**
+     * Determine whether the user can create interstitials.
+     */
+    public function create(User $user): bool
+    {
+        return $this->viewAny($user);
+    }
+
+    /**
+     * Determine whether the user can update the interstitial.
+     */
+    public function update(User $user, Interstitial $interstitial): bool
+    {
+        return $this->viewAny($user);
+    }
+
+    /**
+     * Determine whether the user can delete the interstitial.
+     */
+    public function delete(User $user, Interstitial $interstitial): bool
+    {
+        return $this->viewAny($user);
+    }
+
+    /**
+     * Determine whether the user can restore the interstitial.
+     */
+    public function restore(User $user, Interstitial $interstitial): bool
+    {
+        return $this->viewAny($user);
+    }
+}
