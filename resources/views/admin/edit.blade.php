@@ -13,11 +13,11 @@
             </p>
         </div>
         <div class="actions">
-            <form method="POST" action="{{ route('larastitial.admin.duplicate', $interstitial) }}" style="display: inline;">
+            <form method="POST" action="{{ route('larastitial.admin.duplicate', $interstitial) }}" class="inline-form">
                 @csrf
                 <button type="submit" class="btn btn-secondary">Duplicate</button>
             </form>
-            <form method="POST" action="{{ route('larastitial.admin.destroy', $interstitial) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this interstitial?');">
+            <form method="POST" action="{{ route('larastitial.admin.destroy', $interstitial) }}" class="inline-form" onsubmit="return confirm('Are you sure you want to delete this interstitial?');">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-danger">Delete</button>
@@ -27,12 +27,12 @@
 
     <div class="card">
         <div class="card-body">
-            <form method="POST" action="{{ route('larastitial.admin.update', $interstitial) }}">
+            <form method="POST" action="{{ route('larastitial.admin.update', $interstitial) }}" class="larastitial-admin-form">
                 @csrf
                 @method('PUT')
                 @include('larastitial::admin.partials.form')
 
-                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <div class="larastitial-form-actions">
                     <button type="submit" class="btn btn-primary">Update Interstitial</button>
                     <a href="{{ route('larastitial.admin.show', $interstitial) }}" class="btn btn-secondary">Cancel</a>
                 </div>

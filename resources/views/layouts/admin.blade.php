@@ -316,6 +316,99 @@
             display: flex;
             gap: 0.5rem;
         }
+
+        .inline-form {
+            display: inline;
+        }
+
+        /* Scoped admin form styles */
+        .larastitial-admin-form > div {
+            margin-bottom: 1.5rem;
+        }
+
+        .larastitial-admin-form > div > div {
+            margin-bottom: 1rem;
+        }
+
+        .larastitial-admin-form label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .larastitial-admin-form input[type="text"],
+        .larastitial-admin-form input[type="number"],
+        .larastitial-admin-form input[type="datetime-local"],
+        .larastitial-admin-form select,
+        .larastitial-admin-form textarea {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .larastitial-admin-form input:focus,
+        .larastitial-admin-form select:focus,
+        .larastitial-admin-form textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .larastitial-admin-form input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .larastitial-admin-form label:has(input[type="checkbox"]) {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .larastitial-admin-form small {
+            display: block;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        /* Error messages appear after the help text small */
+        .larastitial-admin-form small + small {
+            color: #ef4444;
+        }
+
+        .larastitial-admin-form hr {
+            margin: 2rem 0;
+            border: none;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .larastitial-admin-form h3 {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .larastitial-admin-form #editor-container {
+            height: 200px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .larastitial-form-actions {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
     </style>
     @stack('styles')
 </head>
