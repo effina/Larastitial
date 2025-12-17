@@ -7,7 +7,6 @@ namespace effina\Larastitial\Services;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use effina\Larastitial\Contracts\ContentRenderer;
 use effina\Larastitial\Events\InterstitialCompleted;
 use effina\Larastitial\Events\InterstitialDismissed;
@@ -55,11 +54,6 @@ class InterstitialManager
         $sessionKey = $this->getSessionKey();
         $sessionData = session()->get($sessionKey, []);
 
-        Log::debug('[Larastitial] Loading from session', [
-            'session_key' => $sessionKey,
-            'session_data' => $sessionData,
-        ]);
-
         foreach ($sessionData as $item) {
             if (isset($item['interstitial_id'])) {
                 $interstitial = Interstitial::find($item['interstitial_id']);
@@ -67,10 +61,6 @@ class InterstitialManager
                     $this->queued->push([
                         'interstitial' => $interstitial,
                         'source' => $item['source'] ?? 'session',
-                    ]);
-                    Log::debug('[Larastitial] Loaded interstitial from session', [
-                        'id' => $interstitial->id,
-                        'name' => $interstitial->name,
                     ]);
                 }
             }
@@ -95,12 +85,8 @@ class InterstitialManager
             'source' => $item['source'],
         ])->toArray();
 
-        Log::debug('[Larastitial] Saving to session', [
-            'session_key' => $sessionKey,
-            'session_data' => $sessionData,
-        ]);
-
         session()->put($sessionKey, $sessionData);
+        session()->save();
     }
 
     /**
@@ -195,63 +181,14 @@ class InterstitialManager
         $eventClass = get_class($event);
         $user = $this->extractUserFromEvent($event);
 
-        // Debug: Check what's in the database using raw DB query
-        $tableName = (new Interstitial())->getTable();
-        $rawResults = \Illuminate\Support\Facades\DB::table($tableName)
-            ->whereNull('deleted_at')
-            ->get(['id', 'name', 'trigger_event', 'is_active']);
-
-        Log::debug('[Larastitial] Raw DB query - all interstitials', [
-            'table' => $tableName,
-            'results' => $rawResults->toArray(),
-        ]);
-
-        $allWithEvent = Interstitial::query()
-            ->where('trigger_event', $eventClass)
-            ->get();
-
-        Log::debug('[Larastitial] Checking event interstitials', [
-            'event_class' => $eventClass,
-            'event_class_length' => strlen($eventClass),
-            'all_with_event' => $allWithEvent->map(fn ($i) => [
-                'id' => $i->id,
-                'name' => $i->name,
-                'trigger_event' => $i->trigger_event,
-                'is_active' => $i->is_active,
-                'schedule_start' => $i->trigger_schedule_start,
-                'schedule_end' => $i->trigger_schedule_end,
-            ])->toArray(),
-        ]);
-
-        $afterActive = Interstitial::query()
-            ->active()
-            ->forEvent($eventClass)
-            ->get();
-
-        Log::debug('[Larastitial] After active filter', [
-            'count' => $afterActive->count(),
-        ]);
-
-        $afterSchedule = Interstitial::query()
+        return Interstitial::query()
             ->active()
             ->scheduledNow()
             ->forEvent($eventClass)
-            ->get();
-
-        Log::debug('[Larastitial] After schedule filter', [
-            'count' => $afterSchedule->count(),
-        ]);
-
-        $final = $afterSchedule
+            ->byPriority()
+            ->get()
             ->filter(fn (Interstitial $i) => $this->shouldShow($i, $user))
             ->values();
-
-        Log::debug('[Larastitial] After shouldShow filter', [
-            'count' => $final->count(),
-            'user_id' => $user?->getAuthIdentifier(),
-        ]);
-
-        return $final;
     }
 
     /**

@@ -94,17 +94,44 @@
 
 <h3>Trigger Settings (Optional)</h3>
 
+@php
+    $commonEvents = [
+        '' => '-- None --',
+        'Illuminate\Auth\Events\Login' => 'Login',
+        'Illuminate\Auth\Events\Registered' => 'Registered',
+        'Illuminate\Auth\Events\Verified' => 'Email Verified',
+        'Illuminate\Auth\Events\PasswordReset' => 'Password Reset',
+        'Illuminate\Auth\Events\Logout' => 'Logout',
+        'other' => 'Other (Custom Event)',
+    ];
+    $currentEvent = old('trigger_event', $interstitial?->trigger_event);
+    $isCustomEvent = $currentEvent && !array_key_exists($currentEvent, $commonEvents);
+@endphp
+
 <div>
-    <label for="trigger_event">Trigger Event</label>
+    <label for="trigger_event_select">Trigger Event</label>
+    <select id="trigger_event_select">
+        @foreach($commonEvents as $value => $label)
+            <option value="{{ $value }}" {{ ($currentEvent === $value || ($isCustomEvent && $value === 'other')) ? 'selected' : '' }}>
+                {{ $label }}
+            </option>
+        @endforeach
+    </select>
+    <small>Laravel event that triggers this interstitial</small>
+</div>
+
+<div id="custom-event-group" data-visible="{{ $isCustomEvent ? 'true' : 'false' }}">
+    <label for="trigger_event_custom">Custom Event Class</label>
     <input
         type="text"
-        id="trigger_event"
-        name="trigger_event"
-        value="{{ old('trigger_event', $interstitial?->trigger_event) }}"
-        placeholder="e.g., Illuminate\Auth\Events\Login"
+        id="trigger_event_custom"
+        value="{{ $isCustomEvent ? $currentEvent : '' }}"
+        placeholder="App\Events\YourCustomEvent"
     >
-    <small>Laravel event class that triggers this interstitial</small>
+    <small>Fully qualified class name of your custom event</small>
 </div>
+
+<input type="hidden" id="trigger_event" name="trigger_event" value="{{ $currentEvent }}">
 
 <div>
     <label for="trigger_routes">Trigger Routes</label>
@@ -415,6 +442,36 @@
             const roles = this.value.split(',').map(function(r) { return r.trim(); }).filter(function(r) { return r; });
             audienceRolesHidden.value = JSON.stringify(roles);
         });
+    }
+
+    // Handle trigger event dropdown
+    const triggerEventSelect = document.getElementById('trigger_event_select');
+    const triggerEventCustom = document.getElementById('trigger_event_custom');
+    const triggerEventHidden = document.getElementById('trigger_event');
+    const customEventGroup = document.getElementById('custom-event-group');
+
+    if (triggerEventSelect && triggerEventHidden) {
+        function updateTriggerEvent() {
+            const selectedValue = triggerEventSelect.value;
+
+            if (selectedValue === 'other') {
+                setVisible(customEventGroup, true);
+                triggerEventHidden.value = triggerEventCustom ? triggerEventCustom.value : '';
+            } else {
+                setVisible(customEventGroup, false);
+                triggerEventHidden.value = selectedValue;
+            }
+        }
+
+        triggerEventSelect.addEventListener('change', updateTriggerEvent);
+
+        if (triggerEventCustom) {
+            triggerEventCustom.addEventListener('input', function() {
+                if (triggerEventSelect.value === 'other') {
+                    triggerEventHidden.value = this.value;
+                }
+            });
+        }
     }
 })();
 </script>

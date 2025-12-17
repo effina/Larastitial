@@ -6,8 +6,6 @@ namespace effina\Larastitial\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use effina\Larastitial\Models\Interstitial;
 use effina\Larastitial\Services\InterstitialManager;
@@ -35,23 +33,12 @@ class CheckInterstitials
         // Load any interstitials queued from previous request (e.g., from events)
         $this->manager->loadFromSession();
 
-        $queued = $this->manager->getQueued();
-        Log::debug('[Larastitial] Middleware checking queued interstitials', [
-            'path' => $request->path(),
-            'queued_count' => $queued->count(),
-            'queued' => $queued->map(fn ($i) => ['name' => $i->name, 'type' => $i->type->value])->toArray(),
-        ]);
-
         // Check for full-page interstitials from session (event-triggered)
-        $sessionFullPage = $queued->first(
+        $sessionFullPage = $this->manager->getQueued()->first(
             fn (Interstitial $i) => $i->type === InterstitialType::FullPage
         );
 
         if ($sessionFullPage) {
-            Log::debug('[Larastitial] Redirecting to full-page interstitial', [
-                'name' => $sessionFullPage->name,
-                'uuid' => $sessionFullPage->uuid,
-            ]);
             return $this->handleFullPageInterstitial($request, $sessionFullPage);
         }
 
