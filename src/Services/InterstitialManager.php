@@ -7,6 +7,7 @@ namespace effina\Larastitial\Services;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use effina\Larastitial\Contracts\ContentRenderer;
 use effina\Larastitial\Events\InterstitialCompleted;
 use effina\Larastitial\Events\InterstitialDismissed;
@@ -24,6 +25,7 @@ class InterstitialManager
     protected ?Authenticatable $user = null;
     protected ?InterstitialType $typeFilter = null;
     protected Collection $queued;
+    protected bool $sessionLoaded = false;
 
     public function __construct(
         protected AudienceResolver $audienceResolver,
@@ -31,6 +33,74 @@ class InterstitialManager
         protected ContentRenderer $contentRenderer
     ) {
         $this->queued = collect();
+    }
+
+    /**
+     * Get the session key for storing queued interstitials.
+     */
+    protected function getSessionKey(): string
+    {
+        return config('larastitial.session.queued_key', 'larastitial_queued');
+    }
+
+    /**
+     * Load queued interstitials from session.
+     */
+    public function loadFromSession(): self
+    {
+        if ($this->sessionLoaded) {
+            return $this;
+        }
+
+        $sessionKey = $this->getSessionKey();
+        $sessionData = session()->get($sessionKey, []);
+
+        Log::debug('[Larastitial] Loading from session', [
+            'session_key' => $sessionKey,
+            'session_data' => $sessionData,
+        ]);
+
+        foreach ($sessionData as $item) {
+            if (isset($item['interstitial_id'])) {
+                $interstitial = Interstitial::find($item['interstitial_id']);
+                if ($interstitial) {
+                    $this->queued->push([
+                        'interstitial' => $interstitial,
+                        'source' => $item['source'] ?? 'session',
+                    ]);
+                    Log::debug('[Larastitial] Loaded interstitial from session', [
+                        'id' => $interstitial->id,
+                        'name' => $interstitial->name,
+                    ]);
+                }
+            }
+        }
+
+        // Clear the session after loading
+        session()->forget($sessionKey);
+
+        $this->sessionLoaded = true;
+
+        return $this;
+    }
+
+    /**
+     * Save queued interstitials to session (for cross-request persistence).
+     */
+    protected function saveToSession(): void
+    {
+        $sessionKey = $this->getSessionKey();
+        $sessionData = $this->queued->map(fn ($item) => [
+            'interstitial_id' => $item['interstitial']->id,
+            'source' => $item['source'],
+        ])->toArray();
+
+        Log::debug('[Larastitial] Saving to session', [
+            'session_key' => $sessionKey,
+            'session_data' => $sessionData,
+        ]);
+
+        session()->put($sessionKey, $sessionData);
     }
 
     /**
@@ -274,13 +344,20 @@ class InterstitialManager
 
     /**
      * Queue an interstitial for display.
+     *
+     * @param bool $persist Whether to persist to session (for cross-request like events)
      */
-    public function queue(Interstitial $interstitial, string $source = 'manual'): void
+    public function queue(Interstitial $interstitial, string $source = 'manual', bool $persist = false): void
     {
         $this->queued->push([
             'interstitial' => $interstitial,
             'source' => $source,
         ]);
+
+        // Persist to session if requested (e.g., for event triggers that redirect)
+        if ($persist) {
+            $this->saveToSession();
+        }
 
         // Fire triggered event
         event(new InterstitialTriggered($interstitial, Auth::user(), $source));
