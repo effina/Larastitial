@@ -27,6 +27,39 @@ php artisan vendor:publish --tag=larastitial-migrations
 php artisan migrate
 ```
 
+### Middleware Registration
+
+The package automatically registers its middleware to the `web` middleware group. If auto-registration doesn't work (common in Laravel 11+), manually register it:
+
+**Laravel 11+ (`bootstrap/app.php`):**
+
+```php
+use effina\Larastitial\Http\Middleware\CheckInterstitials;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->appendToGroup('web', CheckInterstitials::class);
+    })
+    // ...
+```
+
+**Laravel 10 (`app/Http/Kernel.php`):**
+
+```php
+protected $middlewareGroups = [
+    'web' => [
+        // ... other middleware
+        \effina\Larastitial\Http\Middleware\CheckInterstitials::class,
+    ],
+];
+```
+
+To verify the middleware is registered:
+
+```php
+dd(app('router')->getMiddlewareGroups()['web']);
+```
+
 ## Quick Start
 
 ### 1. Create an Interstitial

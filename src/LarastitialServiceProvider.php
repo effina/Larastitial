@@ -158,9 +158,17 @@ class LarastitialServiceProvider extends ServiceProvider
         $router = $this->app['router'];
         $router->aliasMiddleware('larastitial', CheckInterstitials::class);
 
-        foreach (config('larastitial.middleware_groups', ['web']) as $group) {
-            $router->pushMiddlewareToGroup($group, CheckInterstitials::class);
-        }
+        // Defer middleware group registration until app is booted
+        // This ensures middleware groups exist before we try to add to them
+        $this->app->booted(function () use ($router) {
+            $groups = config('larastitial.middleware_groups', ['web']);
+
+            foreach ($groups as $group) {
+                if (method_exists($router, 'pushMiddlewareToGroup')) {
+                    $router->pushMiddlewareToGroup($group, CheckInterstitials::class);
+                }
+            }
+        });
     }
 
     protected function registerEventListeners(): void
