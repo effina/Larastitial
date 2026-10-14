@@ -22,11 +22,18 @@ class AdminController extends Controller
 {
     public function __construct()
     {
+        // Deny by default: the host app must define the gate to grant admin access
         $this->middleware(function ($request, $next) {
             $gate = config('larastitial.admin.gate', 'manage-interstitials');
+
+            if (!Gate::has($gate) && config('app.debug')) {
+                abort(403, "Larastitial admin access requires the \"{$gate}\" gate to be defined.");
+            }
+
             if (!Gate::allows($gate)) {
                 abort(403);
             }
+
             return $next($request);
         });
     }

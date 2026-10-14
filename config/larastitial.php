@@ -122,6 +122,11 @@ return [
     | Configure the built-in admin interface for managing interstitials.
     | Set enabled to false to disable the admin routes entirely.
     |
+    | Access is denied unless your application defines the gate named below,
+    | e.g. Gate::define('manage-interstitials', fn ($user) => $user->is_admin).
+    | Admins can store Blade content that executes on the server, so grant
+    | this only to fully trusted users.
+    |
     */
     'admin' => [
         'enabled' => true,
@@ -188,6 +193,7 @@ return [
     'session' => [
         'queued_key' => 'larastitial_queued',
         'viewed_key' => 'larastitial_viewed_this_session',
+        'passed_key' => 'larastitial_full_page_passed',
     ],
 
     /*

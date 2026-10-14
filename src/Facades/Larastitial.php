@@ -11,7 +11,7 @@ use effina\Larastitial\Testing\LarastitialFake;
 
 /**
  * @method static \Illuminate\Support\Collection getApplicable(?\Illuminate\Contracts\Auth\Authenticatable $user, string $context, array $meta = [])
- * @method static ?Interstitial getForEvent(object $event)
+ * @method static \Illuminate\Support\Collection getForEvent(object $event)
  * @method static \Illuminate\Support\Collection getForRoute(string $route)
  * @method static void markViewed(Interstitial $interstitial, ?\Illuminate\Contracts\Auth\Authenticatable $user, string $action)
  * @method static bool shouldShow(Interstitial $interstitial, ?\Illuminate\Contracts\Auth\Authenticatable $user)

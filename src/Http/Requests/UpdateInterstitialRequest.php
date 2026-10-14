@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace effina\Larastitial\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use effina\Larastitial\Support\Enums\AudienceType;
 use effina\Larastitial\Support\Enums\ContentType;
@@ -16,7 +17,7 @@ class UpdateInterstitialRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows(config('larastitial.admin.gate', 'manage-interstitials'));
     }
 
     public function rules(): array

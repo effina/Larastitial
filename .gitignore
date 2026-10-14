@@ -1,1 +1,5 @@
-# add ignored files if needed
+/vendor/
+composer.lock
+/.phpunit.cache/
+.phpunit.result.cache
+firebase-debug.log

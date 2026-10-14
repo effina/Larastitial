@@ -4,8 +4,8 @@ A Laravel package for managing interstitials (modals, full-page redirects, inlin
 
 ## Requirements
 
-- PHP 8.2+
-- Laravel 10.x, 11.x, or 12.x
+- PHP 8.2+ (Laravel 13 requires PHP 8.3+)
+- Laravel 10.x, 11.x, 12.x, or 13.x
 
 ## Installation
 
@@ -29,7 +29,7 @@ php artisan migrate
 
 ### Middleware Registration
 
-The package automatically registers its middleware to the `web` middleware group. If auto-registration doesn't work (common in Laravel 11+), manually register it:
+The package automatically registers its middleware to the groups listed in `middleware_groups` (default: `web`). Manual registration is only needed if you set `middleware_groups` to an empty array and want to control placement yourself:
 
 **Laravel 11+ (`bootstrap/app.php`):**
 
@@ -60,11 +60,25 @@ To verify the middleware is registered:
 dd(app('router')->getMiddlewareGroups()['web']);
 ```
 
+### Admin Access
+
+The admin UI is closed by default. Grant access by defining the `manage-interstitials` gate (name configurable via `admin.gate`), typically in `AppServiceProvider::boot()`:
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+Gate::define('manage-interstitials', fn ($user) => $user->is_admin);
+```
+
+> **Security:** interstitial content can contain Blade, which executes on the server. Only grant this gate to fully trusted users.
+
+Upgrading from 1.x? See [UPGRADE.md](UPGRADE.md).
+
 ## Quick Start
 
 ### 1. Create an Interstitial
 
-Visit `/admin/interstitials` to use the built-in admin UI, or create one programmatically:
+Visit `/admin/interstitials` to use the built-in admin UI (see [Admin Access](#admin-access)), or create one programmatically:
 
 ```php
 use effina\Larastitial\Models\Interstitial;
