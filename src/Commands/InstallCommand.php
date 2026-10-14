@@ -48,7 +48,7 @@ class InstallCommand extends Command
 
         $this->line('Next steps:');
         $this->line('1. Configure your event listeners in config/larastitial.php');
-        $this->line('2. Define a Gate for admin access (optional)');
+        $this->line("2. Define the '" . config('larastitial.admin.gate', 'manage-interstitials') . "' gate to grant admin access (required for the admin UI)");
         $this->line('3. Add the HasInterstitials trait to your User model (optional)');
         $this->line('4. Visit /admin/interstitials to create your first interstitial');
 

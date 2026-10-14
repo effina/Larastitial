@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace effina\Larastitial\Services;
 
+use DateTimeInterface;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use effina\Larastitial\Models\Interstitial;
 use effina\Larastitial\Models\InterstitialView;
@@ -137,7 +139,17 @@ class FrequencyChecker
             return PHP_INT_MAX; // Never viewed, so infinite days ago
         }
 
-        return (int) now()->diffInDays($lastViewedAt);
+        // Cache stores a Unix timestamp (Laravel 13 restricts unserializing objects from cache)
+        if (is_int($lastViewedAt) || is_numeric($lastViewedAt)) {
+            $lastViewedAt = Carbon::createFromTimestamp((int) $lastViewedAt);
+        }
+
+        if (!$lastViewedAt instanceof DateTimeInterface) {
+            return PHP_INT_MAX;
+        }
+
+        // Carbon 3 returns a signed float, so measure from the past view forward
+        return (int) Carbon::instance($lastViewedAt)->diffInDays(now(), true);
     }
 
     /**
@@ -168,7 +180,7 @@ class FrequencyChecker
 
             // Store last viewed timestamp
             $lastViewedKey = $this->getCacheKey('last_viewed', $interstitial, $user, $sessionId);
-            Cache::put($lastViewedKey, now(), $ttl);
+            Cache::put($lastViewedKey, now()->getTimestamp(), $ttl);
 
             // Handle don't show again
             if ($action === ViewAction::DontShowAgain) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace effina\Larastitial;
 
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -45,7 +46,6 @@ class LarastitialServiceProvider extends ServiceProvider
         $this->registerBladeDirectives();
         $this->registerBladeComponents();
         $this->registerPolicies();
-        $this->registerGates();
         $this->registerCommands();
     }
 
@@ -162,9 +162,18 @@ class LarastitialServiceProvider extends ServiceProvider
         // This ensures middleware groups exist before we try to add to them
         $this->app->booted(function () use ($router) {
             $groups = config('larastitial.middleware_groups', ['web']);
+            $kernel = $this->app->bound(HttpKernel::class) ? $this->app->make(HttpKernel::class) : null;
+
+            $kernelGroups = $kernel !== null && method_exists($kernel, 'getMiddlewareGroups')
+                ? $kernel->getMiddlewareGroups()
+                : [];
 
             foreach ($groups as $group) {
-                if (method_exists($router, 'pushMiddlewareToGroup')) {
+                // The HTTP kernel re-syncs its groups to the router (Laravel 11+), so register there;
+                // groups defined only on the router (e.g. Route::middlewareGroup) stay on the router
+                if (isset($kernelGroups[$group]) && method_exists($kernel, 'appendMiddlewareToGroup')) {
+                    $kernel->appendMiddlewareToGroup($group, CheckInterstitials::class);
+                } else {
                     $router->pushMiddlewareToGroup($group, CheckInterstitials::class);
                 }
             }
@@ -212,17 +221,6 @@ class LarastitialServiceProvider extends ServiceProvider
     protected function registerPolicies(): void
     {
         Gate::policy(Interstitial::class, InterstitialPolicy::class);
-    }
-
-    protected function registerGates(): void
-    {
-        $gateName = config('larastitial.admin.gate', 'manage-interstitials');
-
-        if (!Gate::has($gateName)) {
-            Gate::define($gateName, function ($user) {
-                return true;
-            });
-        }
     }
 
     protected function registerCommands(): void

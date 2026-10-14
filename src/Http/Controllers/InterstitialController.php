@@ -83,6 +83,12 @@ class InterstitialController extends Controller
      */
     protected function redirectAfterInterstitial(Interstitial $interstitial, ?string $ctaClicked = null): RedirectResponse
     {
+        // Let the next request through so the trigger route doesn't bounce the user straight back
+        $passedKey = config('larastitial.session.passed_key', 'larastitial_full_page_passed');
+        $passed = (array) session()->get($passedKey, []);
+        $passed[] = $interstitial->id;
+        session()->flash($passedKey, array_values(array_unique($passed)));
+
         // Check for CTA-specific redirect
         if ($ctaClicked && $interstitial->cta_buttons) {
             foreach ($interstitial->cta_buttons as $button) {

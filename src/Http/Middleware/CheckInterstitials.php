@@ -25,6 +25,12 @@ class CheckInterstitials
             return $next($request);
         }
 
+        // Only GET requests can be redirected safely; leave form submissions alone
+        // so session-queued interstitials survive until the next page load
+        if (!$request->isMethod('GET')) {
+            return $next($request);
+        }
+
         // Skip for specific routes
         if ($this->shouldSkipRoute($request)) {
             return $next($request);
@@ -33,10 +39,15 @@ class CheckInterstitials
         // Load any interstitials queued from previous request (e.g., from events)
         $this->manager->loadFromSession();
 
+        // Full-page interstitials the user just came back from (prevents redirect loops)
+        $passedKey = config('larastitial.session.passed_key', 'larastitial_full_page_passed');
+        $passed = (array) session()->get($passedKey, []);
+
+        $isRedirectable = fn (Interstitial $i) => $i->type === InterstitialType::FullPage
+            && !in_array($i->id, $passed, true);
+
         // Check for full-page interstitials from session (event-triggered)
-        $sessionFullPage = $this->manager->getQueued()->first(
-            fn (Interstitial $i) => $i->type === InterstitialType::FullPage
-        );
+        $sessionFullPage = $this->manager->getQueued()->first($isRedirectable);
 
         if ($sessionFullPage) {
             return $this->handleFullPageInterstitial($request, $sessionFullPage);
@@ -47,9 +58,7 @@ class CheckInterstitials
         $routeInterstitials = $this->manager->getForRoute($routeName);
 
         // Check for full-page interstitials from route
-        $routeFullPage = $routeInterstitials->first(
-            fn (Interstitial $i) => $i->type === InterstitialType::FullPage
-        );
+        $routeFullPage = $routeInterstitials->first($isRedirectable);
 
         if ($routeFullPage) {
             return $this->handleFullPageInterstitial($request, $routeFullPage);
@@ -57,6 +66,10 @@ class CheckInterstitials
 
         // Queue route-based modal/inline interstitials for display
         foreach ($routeInterstitials as $interstitial) {
+            if ($interstitial->type === InterstitialType::FullPage) {
+                continue;
+            }
+
             $this->manager->queue($interstitial, 'route');
         }
 
@@ -89,22 +102,18 @@ class CheckInterstitials
      */
     protected function shouldSkipRoute(Request $request): bool
     {
-        $routePrefix = config('larastitial.full_page.route_prefix', 'interstitial');
-        $adminPrefix = config('larastitial.admin.prefix', 'admin/interstitials');
+        $prefixes = [
+            config('larastitial.full_page.route_prefix', 'interstitial'),
+            config('larastitial.admin.prefix', 'admin/interstitials'),
+            'api',
+        ];
 
-        // Skip interstitial routes
-        if (str_starts_with($request->path(), $routePrefix)) {
-            return true;
-        }
+        foreach ($prefixes as $prefix) {
+            $prefix = trim((string) $prefix, '/');
 
-        // Skip admin routes
-        if (str_starts_with($request->path(), $adminPrefix)) {
-            return true;
-        }
-
-        // Skip API routes
-        if (str_starts_with($request->path(), 'api/')) {
-            return true;
+            if ($request->is($prefix, $prefix . '/*')) {
+                return true;
+            }
         }
 
         return false;

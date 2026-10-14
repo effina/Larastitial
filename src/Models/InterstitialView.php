@@ -68,6 +68,11 @@ class InterstitialView extends Model
 
     public function scopeForUserOrSession(Builder $query, int|string|null $userId, ?string $sessionId): Builder
     {
+        // Without an identifier, an empty nested where would match every visitor's views
+        if (empty($userId) && empty($sessionId)) {
+            return $query->whereRaw('1 = 0');
+        }
+
         return $query->where(function (Builder $q) use ($userId, $sessionId) {
             if ($userId) {
                 $q->where('user_id', $userId);
